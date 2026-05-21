@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/news",
+      "destination": "/api/news.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/news",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
