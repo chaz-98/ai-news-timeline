@@ -6,10 +6,10 @@ const parser = new Parser();
 
 // 中国科技新闻 RSS 源
 const RSS_FEEDS = [
-  { name: "36氪", url: "https://36kr.com/feed", category: "科技" },
-  { name: "钛媒体", url: "https://www.tmtpost.com/rss", category: "科技" },
-  { name: "机器之心", url: "https://www.jiqizhixin.com/rss", category: "AI" },
-  { name: "InfoQ 中国", url: "https://www.infoq.cn/feed", category: "技术" },
+  { name: "澎湃新闻", url: "https://www.thepaper.cn/rss_26916", category: "科技" },
+  { name: "财经网科技", url: "https://tech.caijing.com.cn/rss/tech.xml", category: "科技" },
+  { name: "网易科技", url: "https://tech.163.com/special/000915RB/rss.xml", category: "科技" },
+  { name: "新浪科技", url: "https://tech.sina.com.cn/rss/tech.xml", category: "科技" },
 ];
 
 // 兜底图片
