@@ -6,10 +6,9 @@ const parser = new Parser();
 
 // 中国科技新闻 RSS 源
 const RSS_FEEDS = [
-  { name: "澎湃新闻", url: "https://www.thepaper.cn/rss_26916", category: "科技" },
-  { name: "财经网科技", url: "https://tech.caijing.com.cn/rss/tech.xml", category: "科技" },
-  { name: "网易科技", url: "https://tech.163.com/special/000915RB/rss.xml", category: "科技" },
-  { name: "新浪科技", url: "https://tech.sina.com.cn/rss/tech.xml", category: "科技" },
+  { name: "雷科技", url: "https://www.leiphone.com/feed", category: "科技" },
+  { name: "TechCrunch", url: "https://techcrunch.com/feed/", category: "科技" },
+  { name: "Hacker News", url: "https://news.ycombinator.com/rss", category: "技术" },
 ];
 
 // 兜底图片
