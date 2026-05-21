@@ -28,9 +28,27 @@ async function fetchRSSFeeds() {
       console.log(`Fetching ${feed.name}...`);
       const feedData = await parser.parseURL(feed.url);
       
-      const items = feedData.items.slice(0, 4).map((item, index) => {
-        let summary = item.contentSnippet || item.content || "暂无摘要";
-        summary = summary.replace(/<[^>]*>/g, "").substring(0, 150) + "...";
+      const items = feedData.items.slice(0, 5).map((item, index) => {
+        let summary = item.contentSnippet || item.content || "";
+        
+        // 清理 HTML 标签
+        summary = summary.replace(/<[^>]*>/g, "");
+        
+        // 特殊处理 Hacker News
+        if (feed.name === "Hacker News") {
+          summary = summary || "来自 Hacker News 的热门技术讨论";
+        }
+        
+        // 如果摘要还是空，给一个默认值
+        if (!summary || summary.trim() === "") {
+          summary = "点击查看详情";
+        }
+        
+        // 截取长度
+        summary = summary.substring(0, 150);
+        if (summary.length >= 150) {
+          summary += "...";
+        }
         
         return {
           id: `${feed.name}-${item.guid || item.link || index}`,

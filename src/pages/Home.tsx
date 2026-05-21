@@ -11,6 +11,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
 
   const loadNews = async () => {
     setIsLoading(true);
@@ -44,7 +45,15 @@ export default function Home() {
     loadNews();
   }, []);
 
-  const newsSorted = [...news].sort((a, b) => {
+  // 获取所有可用来源
+  const sources = [...new Set(news.map((n) => n.sourceName))];
+
+  // 筛选和排序新闻
+  const newsFiltered = selectedSource
+    ? news.filter((n) => n.sourceName === selectedSource)
+    : news;
+
+  const newsSorted = [...newsFiltered].sort((a, b) => {
     const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
     const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
     return timeB - timeA;
@@ -111,6 +120,41 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Source Filter */}
+        {!isLoading && sources.length > 0 && (
+          <div className="mb-6">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <button
+                onClick={() => setSelectedSource(null)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedSource === null
+                    ? (isDark ? "bg-white text-gray-900" : "bg-black text-white")
+                    : (isDark
+                        ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200")
+                }`}
+              >
+                全部
+              </button>
+              {sources.map((source) => (
+                <button
+                  key={source}
+                  onClick={() => setSelectedSource(source)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    selectedSource === source
+                      ? (isDark ? "bg-white text-gray-900" : "bg-black text-white")
+                      : (isDark
+                          ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200")
+                  }`}
+                >
+                  {source}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Loading State */}
         {isLoading ? (
           <div className="space-y-4">
@@ -160,11 +204,25 @@ export default function Home() {
               isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
             }`}>
               <p className={`text-lg font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
-                暂无新闻
+                {selectedSource ? `暂无来自 ${selectedSource} 的新闻` : "暂无新闻"}
               </p>
               <p className={`text-sm mb-6 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                点击右上角刷新按钮获取最新新闻
+                {selectedSource
+                  ? "尝试切换到其他来源或点击刷新"
+                  : "点击右上角刷新按钮获取最新新闻"}
               </p>
+              {selectedSource && (
+                <button
+                  onClick={() => setSelectedSource(null)}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                    isDark
+                      ? "bg-white text-gray-900 hover:bg-gray-100"
+                      : "bg-black text-white hover:bg-gray-800"
+                  }`}
+                >
+                  查看全部
+                </button>
+              )}
             </div>
           </div>
         ) : (
