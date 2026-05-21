@@ -64,18 +64,12 @@ async function fetchRSSFeeds() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     console.log("Fetching real RSS news...");
-    let news = await fetchRSSFeeds();
-    
-    // 如果 RSS 没有获取到数据，使用模拟数据
-    if (news.length === 0) {
-      console.log("No news from RSS, using mock data");
-      news = mockNews;
-    }
+    const news = await fetchRSSFeeds();
     
     console.log(`Returning ${news.length} news items`);
     res.json({ success: true, data: news });
   } catch (error) {
     console.error("Error fetching news:", error);
-    res.json({ success: true, data: mockNews });
+    res.json({ success: false, data: [], error: String(error) });
   }
 }

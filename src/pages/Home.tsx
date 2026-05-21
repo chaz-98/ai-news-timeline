@@ -10,14 +10,17 @@ export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadNews = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await fetchNews();
       setNews(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading news:", error);
+      setError(error.message || "加载新闻失败");
     } finally {
       setIsLoading(false);
     }
@@ -25,13 +28,13 @@ export default function Home() {
 
   const handleSync = async () => {
     setIsSyncing(true);
+    setError(null);
     try {
       const data = await syncNews();
       setNews(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error syncing news:", error);
-      // Fallback to just reloading
-      await loadNews();
+      setError(error.message || "刷新失败");
     } finally {
       setIsSyncing(false);
     }
@@ -125,6 +128,44 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : error ? (
+          /* Error State */
+          <div className="py-12 text-center">
+            <div className={`rounded-2xl p-8 ${
+              isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
+            }`}>
+              <p className={`text-lg font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                加载失败
+              </p>
+              <p className={`text-sm mb-6 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                {error}
+              </p>
+              <button
+                onClick={loadNews}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  isDark
+                    ? "bg-white text-gray-900 hover:bg-gray-100"
+                    : "bg-black text-white hover:bg-gray-800"
+                }`}
+              >
+                重试
+              </button>
+            </div>
+          </div>
+        ) : newsSorted.length === 0 ? (
+          /* Empty State */
+          <div className="py-12 text-center">
+            <div className={`rounded-2xl p-8 ${
+              isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
+            }`}>
+              <p className={`text-lg font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                暂无新闻
+              </p>
+              <p className={`text-sm mb-6 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                点击右上角刷新按钮获取最新新闻
+              </p>
+            </div>
           </div>
         ) : (
           /* Timeline */
