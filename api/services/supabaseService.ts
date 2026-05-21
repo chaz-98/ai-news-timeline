@@ -25,7 +25,7 @@ export async function saveNewsToSupabase(news: NewsItem[]) {
       source_url: item.sourceUrl,
       source_name: item.sourceName,
       category: item.category,
-      timestamp: item.timestamp.toISOString(),
+      timestamp: item.timestamp instanceof Date ? item.timestamp.toISOString() : new Date(item.timestamp).toISOString(),
       image_url: item.imageUrl,
     }));
 
