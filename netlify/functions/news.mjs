@@ -1,0 +1,98 @@
+import Parser from 'rss-parser';
+
+const parser = new Parser();
+
+const RSS_FEEDS = [
+  { name: "雷科技", url: "https://www.leiphone.com/feed", category: "科技" },
+  { name: "TechCrunch", url: "https://techcrunch.com/feed/", category: "科技" },
+  { name: "Hacker News", url: "https://news.ycombinator.com/rss", category: "技术" },
+];
+
+const FALLBACK_IMAGES = [
+  "https://picsum.photos/800/400?random=10",
+  "https://picsum.photos/800/400?random=11",
+  "https://picsum.photos/800/400?random=12",
+  "https://picsum.photos/800/400?random=13",
+  "https://picsum.photos/800/400?random=14",
+];
+
+async function fetchRSSFeeds() {
+  const allNews = [];
+
+  for (const feed of RSS_FEEDS) {
+    try {
+      console.log(`Fetching ${feed.name}...`);
+      const feedData = await parser.parseURL(feed.url);
+      
+      const items = feedData.items.slice(0, 5).map((item, index) => {
+        let summary = item.contentSnippet || item.content || "";
+        summary = summary.replace(/<[^>]*>/g, "");
+        
+        if (feed.name === "Hacker News") {
+          summary = summary || "来自 Hacker News 的热门技术讨论";
+        }
+        
+        if (!summary || summary.trim() === "") {
+          summary = "点击查看详情";
+        }
+        
+        summary = summary.substring(0, 150);
+        if (summary.length >= 150) {
+          summary += "...";
+        }
+        
+        return {
+          id: `${feed.name}-${item.guid || item.link || index}`,
+          title: item.title || "无标题",
+          summary: summary,
+          content: item.content,
+          sourceUrl: item.link || "#",
+          sourceName: feed.name,
+          category: feed.category,
+          timestamp: item.pubDate || new Date(),
+          imageUrl: FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
+        };
+      });
+      
+      allNews.push(...items);
+    } catch (error) {
+      console.error(`Error fetching ${feed.name}:`, error);
+    }
+  }
+
+  allNews.sort((a, b) => {
+    const timeA = new Date(a.timestamp).getTime();
+    const timeB = new Date(b.timestamp).getTime();
+    return timeB - timeA;
+  });
+
+  return allNews;
+}
+
+export async function handler(event, context) {
+  try {
+    console.log("Fetching real RSS news...");
+    const news = await fetchRSSFeeds();
+    
+    console.log(`Returning ${news.length} news items`);
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, max-age=0",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ success: true, data: news }),
+    };
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ success: false, data: [], error: String(error) }),
+    };
+  }
+}
