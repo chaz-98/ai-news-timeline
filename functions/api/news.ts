@@ -13,50 +13,59 @@ const FALLBACK_IMAGES = [
 ];
 
 async function fetchRSSFeed(feed: any) {
-  const response = await fetch(feed.url);
-  const text = await response.text();
-  
-  const items: string[] = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let match;
-  
-  while ((match = itemRegex.exec(text)) !== null) {
-    items.push(match[1]);
+  try {
+    const response = await fetch(feed.url);
+    if (!response.ok) {
+      console.error(`Failed to fetch ${feed.name}: ${response.status}`);
+      return [];
+    }
+    const text = await response.text();
+    
+    const items: string[] = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    let match;
+    
+    while ((match = itemRegex.exec(text)) !== null) {
+      items.push(match[1]);
+    }
+    
+    return items.slice(0, 5).map((item, index) => {
+      const title = item.match(/<title>([^<]*)<\/title>/)?.[1] || "无标题";
+      const link = item.match(/<link>([^<]*)<\/link>/)?.[1] || "#";
+      const pubDate = item.match(/<pubDate>([^<]*)<\/pubDate>/)?.[1] || new Date().toISOString();
+      const description = item.match(/<description>([\s\S]*?)<\/description>/)?.[1] || "";
+      
+      let summary = description.replace(/<[^>]*>/g, "");
+      
+      if (feed.name === "Hacker News") {
+        summary = summary || "来自 Hacker News 的热门技术讨论";
+      }
+      
+      if (!summary || summary.trim() === "") {
+        summary = "点击查看详情";
+      }
+      
+      summary = summary.substring(0, 150);
+      if (summary.length >= 150) {
+        summary += "...";
+      }
+      
+      return {
+        id: `${feed.name}-${Date.now()}-${index}`,
+        title: title,
+        summary: summary,
+        content: description,
+        sourceUrl: link,
+        sourceName: feed.name,
+        category: feed.category,
+        timestamp: pubDate,
+        imageUrl: FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching ${feed.name}:`, error);
+    return [];
   }
-  
-  return items.slice(0, 5).map((item, index) => {
-    const title = item.match(/<title>([^<]*)<\/title>/)?.[1] || "无标题";
-    const link = item.match(/<link>([^<]*)<\/link>/)?.[1] || "#";
-    const pubDate = item.match(/<pubDate>([^<]*)<\/pubDate>/)?.[1] || new Date().toISOString();
-    const description = item.match(/<description>([\s\S]*?)<\/description>/)?.[1] || "";
-    
-    let summary = description.replace(/<[^>]*>/g, "");
-    
-    if (feed.name === "Hacker News") {
-      summary = summary || "来自 Hacker News 的热门技术讨论";
-    }
-    
-    if (!summary || summary.trim() === "") {
-      summary = "点击查看详情";
-    }
-    
-    summary = summary.substring(0, 150);
-    if (summary.length >= 150) {
-      summary += "...";
-    }
-    
-    return {
-      id: `${feed.name}-${Date.now()}-${index}`,
-      title: title,
-      summary: summary,
-      content: description,
-      sourceUrl: link,
-      sourceName: feed.name,
-      category: feed.category,
-      timestamp: pubDate,
-      imageUrl: FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
-    };
-  });
 }
 
 export const onRequest: PagesFunction = async (context) => {
@@ -65,12 +74,22 @@ export const onRequest: PagesFunction = async (context) => {
     const allNews: any[] = [];
     
     for (const feed of RSS_FEEDS) {
-      try {
-        const items = await fetchRSSFeed(feed);
-        allNews.push(...items);
-      } catch (error) {
-        console.error(`Error fetching ${feed.name}:`, error);
-      }
+      const items = await fetchRSSFeed(feed);
+      allNews.push(...items);
+    }
+    
+    if (allNews.length === 0) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        data: [], 
+        error: "No news found" 
+      }), {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, max-age=0",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
     
     allNews.sort((a, b) => {
