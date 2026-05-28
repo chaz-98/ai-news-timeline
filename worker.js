@@ -59,10 +59,22 @@ async function fetchRSSFeed(feed) {
   });
 }
 
+const ASSET_MANIFEST = {
+  "index.html": "text/html",
+  "registerSW.js": "application/javascript",
+  "sw.js": "application/javascript",
+  "workbox-774a133b.js": "application/javascript",
+  "manifest.webmanifest": "application/manifest+json",
+  "assets/index-rjwJABKC.css": "text/css",
+  "assets/index-C17Ab3AC.js": "application/javascript",
+  "favicon.svg": "image/svg+xml",
+};
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
+    // API 路由
     if (url.pathname === "/api/news") {
       try {
         console.log("Fetching real RSS news...");
@@ -101,6 +113,45 @@ export default {
           },
         });
       }
+    }
+    
+    // 静态文件路由
+    let path = url.pathname;
+    if (path === "/") path = "/index.html";
+    path = path.startsWith("/") ? path.substring(1) : path;
+    
+    const contentType = ASSET_MANIFEST[path];
+    if (contentType) {
+      try {
+        const assetUrl = new URL(`/${path}`, import.meta.url);
+        const response = await fetch(assetUrl);
+        if (response.ok) {
+          return new Response(response.body, {
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=31536000",
+            },
+          });
+        }
+      } catch (e) {
+        // 如果静态资源加载失败，回退到返回 index.html（SPA 路由）
+      }
+    }
+    
+    // SPA 路由回退
+    try {
+      const indexUrl = new URL("/index.html", import.meta.url);
+      const response = await fetch(indexUrl);
+      if (response.ok) {
+        return new Response(response.body, {
+          headers: {
+            "Content-Type": "text/html",
+            "Cache-Control": "public, max-age=3600",
+          },
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load index.html", e);
     }
     
     return new Response("Not found", { status: 404 });
