@@ -90,13 +90,27 @@ export default function NewsCard({ news }: NewsCardProps) {
           <h3 className={`text-lg font-semibold mb-2 leading-tight ${
             isDark ? "text-white" : "text-gray-900"
           }`}>
-            {news.title}
+            {news.translatedTitle || news.title}
+            {news.translatedTitle && (
+              <span className={`text-sm font-normal mt-1 block ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}>
+                {news.title}
+              </span>
+            )}
           </h3>
           
           <p className={`text-sm leading-relaxed ${
             isDark ? "text-gray-300" : "text-gray-600"
           }`}>
-            {news.summary}
+            {news.translatedSummary || news.summary}
+            {news.translatedSummary && (
+              <span className={`text-xs mt-2 block ${
+                isDark ? "text-gray-500" : "text-gray-400"
+              }`}>
+                {news.summary}
+              </span>
+            )}
           </p>
           
           <div className="mt-3">
